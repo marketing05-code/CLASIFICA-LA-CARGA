@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Cargoweek · Clasifica la Carga</title>
+<style>
+:root{--navy:#06172c;--navy2:#0b203b;--orange:#edf0f4;--text:#07172b;--muted:#53647a;--line:#9aa7b6;--good:#8fe6ad;--bad:#ffaaa5}
+*{box-sizing:border-box}body{margin:0;background:#06172c;color:#ffffff;font-family:Arial,Helvetica,sans-serif;min-height:100vh}
+.wrap{width:min(1000px,100%);margin:auto;padding:16px}.top{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:1px solid #9aa7b6;padding-bottom:14px}.brand{font-weight:950;letter-spacing:.15em;color:#06172c}.tag{color:#53647a;font-weight:900}
+h1{font-size:clamp(2rem,7vw,4rem);margin:20px 0 8px;line-height:.95}.sub{color:#53647a;line-height:1.5}
+.phases{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:18px 0}.phase{border:1px solid var(--line);border-radius:15px;padding:11px;text-align:center;background:#0b203b}.phase.active{border:2px solid #06172c}.phase.locked{opacity:.42}.phase b,.phase small{display:block}.phase small{margin-top:4px;color:var(--muted);font-size:10px}
+.card{background:#ffffff;border:1px solid #9aa7b6;border-radius:22px;padding:18px;box-shadow:0 20px 50px #0004}
+.form{display:grid;grid-template-columns:1fr 1fr auto;gap:10px}input,select,button{font:inherit}input,select{padding:13px;border-radius:12px;border:1px solid #657489;background:#ffffff;color:#07172b;width:100%}button{border:0;border-radius:12px;padding:13px 17px;font-weight:900;cursor:pointer}.primary{background:#06172c;color:#ffffff}.hidden{display:none!important}
+.hud{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;margin-bottom:12px}.pill{background:#eef1f5;border:1px solid #9aa7b6;border-radius:12px;padding:9px 12px;font-weight:900}
+.belt{position:relative;height:190px;border:1px solid #56667a;border-radius:18px;overflow:hidden;background:linear-gradient(#eef1f5 0 56%,#9aa7b6 56% 75%,#667789 75%)}
+.belt:after{content:"";position:absolute;left:0;right:0;bottom:38px;height:8px;background:repeating-linear-gradient(90deg,#77818a 0 35px,#3d4852 35px 50px)}
+.item{position:absolute;left:50%;top:30px;transform:translateX(-50%);text-align:center;z-index:2;animation:pop .25s}.emoji{font-size:64px}.item b{display:block;background:#06172cee;padding:6px 10px;border-radius:10px;font-size:14px}@keyframes pop{from{transform:translateX(-50%) scale(.6)}to{transform:translateX(-50%) scale(1)}}
+.instruction{text-align:center;color:var(--muted);margin:12px 0 8px;font-size:13px}
+.zones{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.zone{min-height:82px;background:#ffffff;color:#07172b;border:2px dashed #657489;border-radius:15px;padding:10px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:14px}.zone:hover,.zone.over{border-color:#06172c;background:#eef1f5}.zone span{font-size:25px;display:block}
+.feedback{min-height:28px;text-align:center;font-weight:900;margin-top:10px}.good{color:var(--good)}.bad{color:var(--bad)}
+.end{text-align:center}.big{font-size:clamp(2.3rem,9vw,5rem);font-weight:950;color:#06172c}.note{color:var(--muted);font-size:12px;text-align:center;margin-top:12px}
+@media(max-width:650px){.wrap{padding:9px}.top{font-size:12px}.form{grid-template-columns:1fr}.phases{gap:4px}.phase{padding:8px 3px}.phase b{font-size:11px}.zones{grid-template-columns:1fr 1fr}.zone{min-height:75px;padding:6px;font-size:12px}.belt{height:170px}.emoji{font-size:55px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <div class="top"><div class="brand">CARGO</div><div class="tag">CARGOWEEK · RETO LOGÍSTICO</div></div>
+ <h1>CLASIFICA<br>LA CARGA 📦</h1>
+ <div class="sub" id="subtitle"></div>
+ <div class="phases" id="phases"></div>
+
+ <section class="card" id="start">
+  <div class="form">
+   <input id="name" placeholder="Nombre completo" maxlength="60">
+   <select id="branch"><option value="">Selecciona tu sucursal</option><option>Estado de México</option><option>Buenos Aires</option><option>Victoria</option><option>Nuevo Repueblo</option><option>Leamington</option><option>Tampico</option><option>Ontario</option><option>Detroit</option><option>San Antonio</option><option>Laredo</option></select>
+   <button class="primary" id="startBtn">COMENZAR</button>
+  </div>
+  <div class="feedback" id="startMsg"></div>
+  <div class="note">Tienes 3 oportunidades por participante en cada fase.</div>
+ </section>
+
+ <section class="card hidden" id="game">
+  <div class="hud"><div class="pill">📦 <span id="progress">1/10</span></div><div class="pill">⭐ <span id="score">0</span> PTS</div><div class="pill">⏱ <span id="timer">01:30</span></div></div>
+  <div class="belt"><div class="item" id="item" draggable="true"><div class="emoji" id="emoji"></div><b id="itemName"></b></div></div>
+  <div class="instruction">Toca la categoría correcta o arrastra la carga hasta ella.</div>
+  <div class="zones" id="zones"></div>
+  <div class="feedback" id="feedback"></div>
+ </section>
+
+ <section class="card end hidden" id="end">
+  <div>OPERACIÓN COMPLETADA</div><h2 id="endTitle">¡Carga clasificada! 🚚</h2>
+  <div class="big" id="finalScore"></div><p id="summary"></p>
+  <button class="primary" onclick="location.reload()">FINALIZAR</button>
+ </section>
+</div>
+<script>
+(()=>{
+/* CAMBIA SOLO ESTE NÚMERO PARA ACTIVAR OTRA FASE */
+const FASE_ACTIVA = 1;
+const SHEETS_URL="https://script.google.com/macros/s/AKfycbzFzv6BMs-nZy21hwji_zn9JpljVqfF7uvXc1a_HoV-MUwhHs2KU7ZiZg2bcvYn_22xXQ/exec";
+
+const FASES={
+1:{time:90,desc:"FASE 1 · Identifica rápidamente el tipo de carga.",cats:[["GENERAL","📦"],["REFRIGERADA","❄️"],["FRÁGIL","🥂"],["URGENTE","⚡"]],items:[
+["👕","Ropa","GENERAL"],["🥛","Lácteos","REFRIGERADA"],["🍷","Botellas de vidrio","FRÁGIL"],["💊","Medicamento urgente","URGENTE"],["📚","Libros","GENERAL"],["🧊","Producto congelado","REFRIGERADA"],["🪞","Espejo","FRÁGIL"],["📄","Documentos express","URGENTE"],["👟","Calzado","GENERAL"],["🎂","Pastel refrigerado","REFRIGERADA"]]},
+2:{time:75,desc:"FASE 2 · Más categorías y menos tiempo para decidir.",cats:[["GENERAL","📦"],["REFRIGERADA","❄️"],["FRÁGIL","🥂"],["URGENTE","⚡"],["PESADA","🏗️"],["PELIGROSA","⚠️"]],items:[
+["🛋️","Muebles","GENERAL"],["🥩","Carne refrigerada","REFRIGERADA"],["🖥️","Monitor","FRÁGIL"],["📑","Refacciones urgentes","URGENTE"],["⚙️","Maquinaria industrial","PESADA"],["🧪","Químicos regulados","PELIGROSA"],["🥬","Producto fresco","REFRIGERADA"],["🏺","Cerámica","FRÁGIL"],["🧱","Material de construcción","PESADA"],["📦","Papelería","GENERAL"],["🔋","Baterías reguladas","PELIGROSA"],["🏥","Insumo médico urgente","URGENTE"]]},
+3:{time:60,desc:"FASE 3 · Nivel experto: cargas especiales y decisiones rápidas.",cats:[["GENERAL","📦"],["CADENA FRÍA","❄️"],["FRÁGIL","🥂"],["PRIORITARIA","⚡"],["SOBREDIMENSIONADA","🏗️"],["REGULADA","⚠️"]],items:[
+["🧬","Muestras biológicas","CADENA FRÍA"],["🛰️","Equipo tecnológico delicado","FRÁGIL"],["🏭","Pieza industrial de gran tamaño","SOBREDIMENSIONADA"],["🧯","Material con manejo especial","REGULADA"],["🩺","Insumos hospitalarios críticos","PRIORITARIA"],["🍓","Alimentos perecederos","CADENA FRÍA"],["🖼️","Obra de arte","FRÁGIL"],["🛠️","Herramientas estándar","GENERAL"],["🏗️","Componente estructural","SOBREDIMENSIONADA"],["📋","Documentación de entrega crítica","PRIORITARIA"],["⚗️","Sustancia regulada","REGULADA"],["👚","Textiles","GENERAL"]]}
+};
+const C=FASES[FASE_ACTIVA],$=s=>document.querySelector(s);
+let list=[],idx=0,score=0,errors=0,left=C.time,timer=null,started=false;
+
+$("#subtitle").textContent=C.desc;
+$("#phases").innerHTML=[1,2,3].map(n=>`<div class="phase ${n===FASE_ACTIVA?"active":"locked"}"><div>${n===FASE_ACTIVA?"🔓":"🔒"}</div><b>FASE ${n}</b><small>${n===FASE_ACTIVA?"DISPONIBLE":"BLOQUEADA"}</small></div>`).join("");
+
+function norm(s){return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim()}
+function attemptKey(){return "clasificaCargaFase"+FASE_ACTIVA+"::"+norm($("#name").value)+"::"+norm($("#branch").value)}
+function attempts(){return +(localStorage.getItem(attemptKey())||0)}
+function shuffle(a){return [...a].sort(()=>Math.random()-.5)}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+
+$("#startBtn").onclick=()=>{
+ if(!$("#name").value.trim()||!$("#branch").value){$("#startMsg").textContent="Escribe tu nombre y selecciona tu sucursal.";return}
+ let a=attempts(); if(a>=3){$("#startMsg").textContent="Ya utilizaste tus 3 oportunidades para esta fase.";return}
+ localStorage.setItem(attemptKey(),a+1); list=shuffle(C.items); started=true;
+ $("#start").classList.add("hidden");$("#game").classList.remove("hidden");$("#timer").textContent=fmt(left);draw();
+ timer=setInterval(()=>{left--;$("#timer").textContent=fmt(left);if(left<=0)finish(true)},1000);
+};
+function draw(){
+ if(idx>=list.length){finish(false);return}
+ let [em,nm]=list[idx];$("#emoji").textContent=em;$("#itemName").textContent=nm;$("#progress").textContent=(idx+1)+"/"+list.length;
+ $("#zones").innerHTML=C.cats.map(c=>`<button class="zone" data-cat="${c[0]}"><div><span>${c[1]}</span>${c[0]}</div></button>`).join("");
+ document.querySelectorAll(".zone").forEach(z=>{
+   z.onclick=()=>choose(z.dataset.cat);
+   z.ondragover=e=>{e.preventDefault();z.classList.add("over")};
+   z.ondragleave=()=>z.classList.remove("over");
+   z.ondrop=e=>{e.preventDefault();z.classList.remove("over");choose(z.dataset.cat)}
+ });
+}
+function choose(cat){
+ if(!started)return; let correct=list[idx][2],f=$("#feedback");
+ if(cat===correct){score+=100;f.textContent="✓ Correcto · +100 puntos";f.className="feedback good"}
+ else{errors++;score=Math.max(0,score-25);f.textContent="✕ Era "+correct+" · -25 puntos";f.className="feedback bad"}
+ $("#score").textContent=score;started=false;setTimeout(()=>{idx++;started=true;f.textContent="";draw()},550);
+}
+function finish(timeout){
+ if(!timer&&$("#end").classList.contains("hidden")===false)return;
+ clearInterval(timer);timer=null;started=false;$("#game").classList.add("hidden");$("#end").classList.remove("hidden");
+ $("#endTitle").textContent=timeout?"¡Tiempo terminado! ⏱":"¡Carga clasificada! 🚚";$("#finalScore").textContent=score+" PTS";
+ $("#summary").textContent=(idx>list.length?list.length:idx)+"/"+list.length+" cargas procesadas · "+errors+" errores · Fase "+FASE_ACTIVA;
+ const datos={nombre:$("#name").value.trim(),sucursal:$("#branch").value,puntos:score,errores:errors,cargas:Math.min(idx,list.length),fase:"Fase "+FASE_ACTIVA,juego:"Clasifica la Carga"};
+ fetch(SHEETS_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify(datos)}).catch(()=>{});
+}
+})();
+</script>
+</body></html>
